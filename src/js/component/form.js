@@ -16,9 +16,7 @@ export function Form() {
 	};
 
 	const eliminarTarea = indexItem => {
-		setList(prevState =>
-			prevState.filter((todo, index) => index !== indexItem)
-		);
+		setList(() => list.filter((todo, index) => index !== indexItem));
 	};
 
 	return (
