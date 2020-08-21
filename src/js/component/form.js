@@ -1,29 +1,80 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 
 export function Form() {
-	const [list, setList] = useState([]); // el primer elemento es la variable a cambiar (si necesito cambiar su valor, obvio xd) /// El segundo es la funcion que hay que llamar para poder cambiarlo (AJURO HAY QUE LLAMARLA *dunno why*) // El tercero (o el igual) es el valor inicial del primer elemento
+	const [list, setList] = useState([]);
 
-	//Aqui lo que hice fue crear una funcion (constante/flecha) que dijera que si en el input(porque ahi es donde la llamo)-
-	//hubiese una KEYPRESS de "Enter" Y tambien el valor del input no fuera "" (o sea completamente vacio) ENTONCES-
-	//hago el setList (o sea cambiarle el valor de list) a lo que tenga el input, junto con lo que list ya tenia anteriormente (por eso los puntos suspensivos)-
-	//cabe destacar que event.set.value se usa en el contexto en el cual se esta llamando la funcion, en este caso se refiere al valor que tenga dentro de la etiqueta <input>
-	const agregarTodo = event => {
+	async function addToDo() {
 		if (event.key == "Enter" && event.target.value != "") {
-			setList([...list, event.target.value]);
+			try {
+				var response = await fetch(
+					"https://assets.breatheco.de/apis/fake/todos/user/gustavin",
+					{
+						method: "PUT",
+						body: JSON.stringify([
+							...list,
+							{ label: event.target.value, done: false }
+						]),
+						headers: {
+							"Content-Type": "application/json"
+						}
+					}
+				);
+				if (response.ok) {
+					let todolist = await response.json();
+					setList(todolist);
+				} else {
+					console.log("fallo la actualizacion(agregar)");
+				}
+			} catch (error) {
+				console.log(error);
+			}
 		}
-	};
+	}
 
-	const eliminarTarea = indexItem => {
-		setList(() => list.filter((todo, index) => index !== indexItem));
-	};
+	async function deleteToDo(indexItem) {
+		try {
+			var response = await fetch(
+				"https://assets.breatheco.de/apis/fake/todos/user/gustavin",
+				{
+					method: "PUT",
+					body: JSON.stringify([
+						() => list.filter((todo, index) => index !== indexItem)
+					]),
+					headers: {
+						"Content-Type": "application/json"
+					}
+				}
+			);
+			if (response.ok) {
+				let todolist = await response.json();
+				setList(todolist);
+			} else {
+				console.log("fallo la actualizacion(eliminar)");
+			}
+		} catch (error) {
+			console.log("hubo un error!", error);
+		}
+	}
+
+	/*useEffect(() => {
+		fetch("https://assets.breatheco.de/apis/fake/todos/user/gustavin")
+			.then(response => {
+				if (!response.ok) {
+					throw Error(response.statusText);
+				}
+				return response.json();
+			})
+			.then(todolist => setList(todolist))
+			.catch(error => console.log(error));
+	}, []);*/
 
 	return (
 		<div>
 			<input
 				type="text"
-				onKeyPress={agregarTodo}
+				onKeyPress={addToDo}
 				className="shadow"
 				placeholder="What needs to be done?"
 			/>
@@ -32,10 +83,10 @@ export function Form() {
 			<ul>
 				{list.map((item, index) => (
 					<li key={index}>
-						{item}
+						{item.label}
 						<button
 							className="btn"
-							onClick={() => eliminarTarea(index)}>
+							onClick={() => deleteToDo(index)}>
 							<i>
 								<FontAwesomeIcon icon={faTimes} />
 							</i>
@@ -45,6 +96,4 @@ export function Form() {
 			</ul>
 		</div>
 	);
-	//En el {list.map} lo que estoy haciendo es basicamente recorriendo los valores de list ya existentes e imprimiendolos dentro de una etiqueta <li>-
-	//lo que significa que si el valor de list cambiara, entonces se seguirian imprimiendo mas y mas  <li>{item}</li> (el item es el valor de list *creo*)
 }
